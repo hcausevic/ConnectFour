@@ -7,6 +7,7 @@ import {
   IoIosUndo,
 } from "react-icons/all";
 import {Player} from "../../services/game";
+import {Point} from "../../interfaces/point";
 
 class Board extends React.Component<any, any> {
   constructor(props: any) {
@@ -25,13 +26,12 @@ class Board extends React.Component<any, any> {
       this.setState({player: Player.RED});
   }
 
-  makeMove(row: number, column: number): void {
-    console.log('clicked on cell: ', row, column)
+  makeMove(column: number): void {
     const {board, player} = this.state;
     for (let i = board.length - 1; i >= 0; i--) {
       if (board[i][column] === null) {
         board[i][column] = {x: i, y: column, player};
-        this.checkBoard();
+        this.checkBoard(i, column);
         this.togglePlayer();
         break;
       }
@@ -42,65 +42,93 @@ class Board extends React.Component<any, any> {
     this.setState({winner});
   }
 
-  checkRows() {
+  checkBoard(row: number, column: number): void {
+
+    // possible directions
     const {board} = this.state;
-    for (let i = 0; i < board.length; i++) {
-      let rowCounter = 1;
-      let rowWinner = null;
-      for (let j = 0; j < board[i].length; j++) {
-        if (rowCounter === 4) {
-          console.log('WE HAVE A WINNER: ', rowWinner)
-          this.setWinner(rowWinner);
-        }
-        // horizontally
-        if (j !== board[i].length - 1) {
-          const cell1 = board[i][j];
-          const cell2 = board[i][j + 1];
-          if (cell1 && cell2 && cell1.player === cell2.player) {
-            rowCounter++;
-            rowWinner = cell1.player;
-          } else {
-            rowCounter = 1;
-            rowWinner = null;
-          }
-        }
+    const color = board[row][column].player;
+    const left = column - 3 >= 0;
+    const right = column + 3 <= board[row].length - 1;
+    const up = row - 3 >= 0;
+    const down = row + 3 <= board.length - 1;
+    const upLeft = row - 3 >= 0 && column - 3 >= 0;
+    const upRight = column + 3 <= board[row].length - 1 && row - 3 >= 0;
+    const downLeft = row + 3 <= board.length - 1 && column - 3 >= 0;
+    const downRight = row + 3 <= board.length - 1 && column + 3 <= board[row].length - 1;
+
+    // find 4 of the same colour
+    if (left) {
+      if (this.hasWon(board, column - 1, row, color, (j: number) => --j, (i: number) => i)) {
+        return;
+      }
+    }
+    if (right) {
+      if (this.hasWon(board, column + 1, row, color, (j: number) => ++j, (i: number) => i)) {
+        this.setWinner(color);
+        return;
+      }
+    }
+    if (up) {
+      if (this.hasWon(board, column, row - 1, color, (j: number) => j, (i: number) => --i)) {
+        this.setWinner(color);
+        return;
+      }
+    }
+    if (down) {
+      if (this.hasWon(board, column, row + 1, color, (j: number) => j, (i: number) => ++i)) {
+        this.setWinner(color);
+        return;
+      }
+    }
+    if (upLeft) {
+      if (this.hasWon(board, column - 1, row - 1, color, (j: number) => --j, (i: number) => --i)) {
+        this.setWinner(color);
+        return;
+      }
+    }
+    if (upRight) {
+      if (this.hasWon(board, column + 1, row - 1, color, (j: number) => ++j, (i: number) => --i)) {
+        this.setWinner(color);
+        return;
+      }
+    }
+    if (downLeft) {
+      if (this.hasWon(board, column - 1, row + 1, color, (j: number) => --j, (i: number) => ++i)) {
+        this.setWinner(color);
+        return;
+      }
+    }
+    if (downRight) {
+      if (this.hasWon(board, column + 1, row + 1, color, (j: number) => ++j, (i: number) => ++i)) {
+        this.setWinner(color);
+        return;
       }
     }
   }
 
-  checkColumns() {
-    const {board} = this.state;
-    for (let column = 0; column < board[0].length; column ++) {
-      let columnCounter = 1;
-      let columnWinner = null;
-      for (let i = 0; i < board.length; i++) {
-        //vertically
-        if (column < board[i].length) {
-          if (columnCounter === 4) {
-            console.log('WE HAVE A WINNER: ', columnWinner)
-            this.setWinner(columnWinner);
-          }
-          if (i !== board.length - 1) {
-            const cell1 = board[i][column];
-            const cell2 = board[i + 1][column];
-            console.log('cell1, cell2', cell1, cell2)
-            if (cell1 && cell2 && cell1.player === cell2.player) {
-              columnCounter++;
-              columnWinner = cell1.player;
-            } else {
-              columnCounter = 1;
-              columnWinner = null;
-            }
-          }
-        }
+  hasWon(board: Array<Array<Point>>,
+         j: number,
+         i: number,
+         color: Player,
+         jOperation: (j: number) => number,
+         iOperation: (i: number) => number): boolean {
+
+    // check for the-same coloured neighbour
+    let tokenNum = 1;
+    let counter = 3;
+    while (counter > 0) {
+      if (board[i][j] && color === board[i][j].player) {
+        tokenNum++;
       }
+      counter--;
+      j = jOperation(j);
+      i = iOperation(i);
     }
-  }
-
-
-  checkBoard(): void {
-    this.checkRows();
-    this.checkColumns();
+    if (tokenNum === 4) {
+      console.log('WIN');
+      return true;
+    }
+    return false;
   }
 
   render() {
@@ -123,7 +151,7 @@ class Board extends React.Component<any, any> {
                 {column.map((row: any, j: number) => (
                   <div key={i + j} className="board-cell">
                     <div className={board[i][j] !== null ? "cell-content player-" + board[i][j].player : "cell-content"}
-                         onClick={() => this.makeMove(i, j)}>
+                         onClick={() => this.makeMove(j)}>
                     </div>
                   </div>
                 ))}
