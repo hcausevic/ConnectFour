@@ -18,9 +18,9 @@ const Board = () => {
   const [gameMode, setGameMode] = useState<GameMode | null>(null);
   const [showGameTypeModal, setShowGameTypeModal] = useState(true);
   const [showGameModeModal, setShowGameModeModal] = useState(false);
-  const [file] = useState<FileService>(FileService.getInstance());
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const file = FileService.getInstance();
 
   const onModalClose = (): void => {
     setShowGameTypeModal(false);
@@ -31,12 +31,16 @@ const Board = () => {
   const makeMove = (column: number): void => {
     for (let i = board.length - 1; i >= 0; i--) {
       if (board[i][column] === null) {
+        // set move
         const move = {x: i, y: column, player};
         board[i][column] = move;
         file.lastMove = move;
-        console.log('file', file)
         setCurrentMove(move);
-        setWinner(BoardService.getWinner(board, i, column));
+        // check for winner
+        const winner = BoardService.getWinner(board, i, column)
+        setWinner(winner);
+        if (winner) file.gameOver = true;
+        // switch player
         player === Player.RED ? setPlayer(Player.BLUE) : setPlayer(Player.RED);
         break;
       }
@@ -150,6 +154,19 @@ const Board = () => {
       Player.RED);
   }
 
+  const onRedoClick = (nextMove: Point | null) => {
+    if (nextMove) {
+      board[nextMove.x][nextMove.y] = nextMove;
+      setCurrentMove(nextMove);
+      // @ts-ignore
+      setPlayer(nextMove ?
+        nextMove.player === Player.RED ?
+          Player.BLUE :
+          Player.RED :
+        currentMove?.player);
+    }
+  }
+
   return (
     <div className="container">
       {renderCorrectModal()}
@@ -157,7 +174,7 @@ const Board = () => {
         //@ts-ignore
         <Modal onPrimaryClick={() => setWinner(null)} primaryLabel="Reset game"/>
       )}
-      <Controls onUndoClick={onUndoClick}/>
+      <Controls onUndoClick={onUndoClick} onRedoClick={onRedoClick}/>
       <div className="board">
         {board.map((column, i: number) =>
           (
@@ -166,6 +183,7 @@ const Board = () => {
                 <div key={i + j} className="board-cell">
                   <div className={board[i][j] !== null ? "cell-content player-" + board[i][j].player : "cell-content"}
                        onClick={() => makeMove(j)}>
+                    {/*({i}, {j})*/}
                   </div>
                 </div>
               ))}
