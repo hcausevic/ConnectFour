@@ -1,5 +1,6 @@
 import {Point} from '../interfaces/point';
 import {GameMode} from '../constants';
+import {isSameMove} from '../utils';
 
 class FileService {
   private static fileInstance: FileService;
@@ -33,9 +34,14 @@ class FileService {
       this._moves = [];
     }
 
-    this._overwriteFlag && this._moves.length !== 0 ?
-      this._moves[this.currentMoveIndex + 1] = point :
+    if (this._overwriteFlag && this._moves.length !== 0) {
+      if (!isSameMove(this._moves[this.currentMoveIndex + 1], point)) {
+        this._moves[this.currentMoveIndex + 1] = point;
+        this._moves = this._moves.slice(0, this.currentMoveIndex + 2);
+      }
+    } else {
       this._moves.push(point);
+    }
     this._currentMoveIndex++;
   }
 
