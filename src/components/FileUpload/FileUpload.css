@@ -1,0 +1,7 @@
+.file-upload__remove-icon {
+    color: red;
+}
+
+.file-upload__remove-icon:hover {
+    cursor: pointer;
+}

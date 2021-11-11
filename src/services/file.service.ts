@@ -46,6 +46,12 @@ class FileService {
       this._moves[++this._currentMoveIndex] :
       null;
   }
+
+  public loadFromFile(moves: Array<Point>, gameMode: GameMode): void {
+    this._moves = moves;
+    this._gameMode = gameMode;
+    this._currentMoveIndex = moves.length - 1;
+  }
 }
 
 export {

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {ChangeEvent, useState} from 'react';
 import Modal from '../Modal';
 import './Board.css'
 import GameType from '../GameType';
@@ -8,21 +8,25 @@ import BoardService from '../../services/board.service';
 import Controls from '../Controls';
 import {FileService} from "../../services/file.service";
 import {Point} from "../../interfaces/point";
+import FileUpload from "../FileUpload";
 
 const Board = () => {
   const [board, setBoard] = useState(Array.from(Array(6), () => new Array(7).fill(null)));
-  const [player, setPlayer] = useState(Player.RED);
+  const [player, setPlayer] = useState<Player>(Player.RED);
   const [currentMove, setCurrentMove] = useState<Point | null>(null);
   const [winner, setWinner] = useState<Player | null>(null);
   const [gameMode, setGameMode] = useState<GameMode | null>(null);
   const [showGameTypeModal, setShowGameTypeModal] = useState(true);
   const [showGameModeModal, setShowGameModeModal] = useState(false);
+  const [file] = useState<FileService>(FileService.getInstance());
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
-  const [file] = useState<FileService>(FileService.getInstance())
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const onModalClose = (): void => {
     setShowGameTypeModal(false);
   }
+
+  console.log('Board: ', board);
 
   const makeMove = (column: number): void => {
     for (let i = board.length - 1; i >= 0; i--) {
@@ -49,12 +53,54 @@ const Board = () => {
     file.gameMode = GameMode.PVC;
   };
 
+  const onResumeGameClick = () => {
+    setShowFileUploadModal(true);
+    setShowGameTypeModal(false);
+  };
+
+  const onCreateGameClick = () => {
+    setShowGameModeModal(true);
+    setShowGameTypeModal(false);
+  };
+
+  const onGameModeConfirmClick = () => {
+    setShowGameModeModal(false);
+  };
+
+  const onFileChange = (e: ChangeEvent): void => {
+    const input = e.target as HTMLInputElement;
+
+    if (input.files?.length) {
+      setSelectedFile(input.files[0]);
+    }
+  };
+
+  const onFileConfirm = () => {
+    const fileReader = new FileReader();
+    fileReader.addEventListener('load', e => {
+      const a = JSON.parse(e.target?.result as string);
+      const newBoard = Array.from(Array(6), () => new Array(7).fill(null));
+      for (const move of a.moves) {
+        newBoard[move.x][move.y] = move;
+      }
+      setBoard(newBoard);
+      file.loadFromFile(a.moves, a.gameMode);
+      // setGameMode(a.gameMode);
+    })
+    fileReader.readAsText(selectedFile!);
+    setShowFileUploadModal(false);
+  };
+
+  const onFileRemove = () => {
+    setSelectedFile(null);
+  };
+
   const renderCorrectModal = (): React.ReactNode => {
     if (showGameTypeModal) {
       return Modal({
-        onPrimaryClick: onModalClose,
+        onPrimaryClick: onResumeGameClick,
         primaryLabel: 'Resume game',
-        onSecondaryClick: onModalClose,
+        onSecondaryClick: onCreateGameClick,
         secondaryLabel: 'Create game',
         secondary: true,
         children: (
@@ -67,7 +113,7 @@ const Board = () => {
 
     if (showGameModeModal) {
       return Modal({
-        onPrimaryClick: onModalClose,
+        onPrimaryClick: onGameModeConfirmClick,
         primaryLabel: 'Confirm',
         header: 'Mode selection',
         children: (
@@ -79,7 +125,16 @@ const Board = () => {
     }
 
     if (showFileUploadModal) {
-      //TODO;
+      return Modal({
+        onPrimaryClick: onFileConfirm,
+        primaryLabel: 'Confirm',
+        header: 'File selection',
+        children: (
+          <div className="div--centered">
+            <FileUpload selectedFile={selectedFile} onFileChange={onFileChange} onFileRemove={onFileRemove}/>
+          </div>
+        )
+      });
     }
   };
 
