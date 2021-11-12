@@ -1,7 +1,7 @@
 import React from 'react';
 import {FaSave, IoIosRedo, IoIosUndo} from 'react-icons/all';
 import './Controls.css';
-import {FileService} from '../../services/file.service';
+import GameHistoryService from '../../services/gameHistory.service';
 import {Point} from '../../interfaces/point';
 
 interface ControlsProps {
@@ -10,29 +10,27 @@ interface ControlsProps {
 }
 
 const Controls = ({onUndoClick, onRedoClick}: ControlsProps) => {
-
-  const file = FileService.getInstance();
-
+  const history = GameHistoryService.getInstance();
   const undoMove = () => {
-    onUndoClick(file.getPreviousMove());
+    onUndoClick(history.getPreviousMove());
   }
 
   const redoMove = () => {
-    onRedoClick(file.getNextMove());
+    onRedoClick(history.getNextMove());
   }
 
   const saveGame = () => {
     const a = document.createElement("a");
-    const fileToDownload = new Blob([JSON.stringify(file.exportContent)], {type: 'application/json'});
+    const fileToDownload = new Blob([JSON.stringify(history.exportContent)], {type: 'application/json'});
 
     a.href = URL.createObjectURL(fileToDownload);
     a.download = `Connect4_game${Math.floor(Math.random() * 100000)}`;
     a.click();
   }
 
-  const redoDisabled = file.currentMoveIndex >= file.movesListLength - 1;
-  const undoDisabled = file.currentMoveIndex < 0;
-  const saveDisabled = file.currentMoveIndex < 0;
+  const redoDisabled = history.currentMoveIndex >= history.movesListLength - 1;
+  const undoDisabled = history.currentMoveIndex < 0;
+  const saveDisabled = history.currentMoveIndex < 0;
 
   return (
     <div className="controls">

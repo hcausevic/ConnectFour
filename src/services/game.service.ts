@@ -1,9 +1,5 @@
-import {Point} from "../interfaces/point";
-
-enum Player {
-  BLUE = 'b',
-  RED = 'r',
-}
+import {Point} from '../interfaces/point';
+import {Player} from '../constants';
 
 class GameService {
   public positions: Array<Point> = [];
@@ -47,5 +43,4 @@ class GameBuilder {
 export {
   GameService,
   GameBuilder,
-  Player,
 }

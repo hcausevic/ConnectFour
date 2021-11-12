@@ -1,5 +1,5 @@
 import {Point} from '../interfaces/point';
-import {Player} from './game.service';
+import {Player} from '../constants';
 
 class BoardService {
   static getWinner(board: Array<Array<Point>>, row: number, column: number): Player | null {
@@ -57,6 +57,15 @@ class BoardService {
       }
     }
     return null;
+  }
+
+  public static isLegalMove(board: Array<Array<Point>>, column: number) {
+    for (let i = 0; i < board.length; ++i) {
+      if (board[i][column] === null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static hasWon(board: Array<Array<Point>>,

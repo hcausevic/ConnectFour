@@ -1,4 +1,4 @@
-import {Player} from "../services/game.service";
+import {Player} from '../constants';
 
 export interface Point {
   x: number;

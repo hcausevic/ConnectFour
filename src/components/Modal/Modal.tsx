@@ -1,6 +1,6 @@
 import React, {MouseEventHandler} from 'react';
 import BootstrapModal from 'react-bootstrap/Modal';
-import Button from "react-bootstrap/Button";
+import Button from 'react-bootstrap/Button';
 
 interface ModalProps {
   header?: string,
@@ -8,9 +8,10 @@ interface ModalProps {
   onPrimaryClick: MouseEventHandler<HTMLElement>;
   secondaryLabel?: string;
   onSecondaryClick?: MouseEventHandler<HTMLElement>;
-  secondary?: Boolean;
+  secondary?: boolean;
   children?: React.ReactNode;
-  centeredFooter?: Boolean
+  centeredFooter?: boolean;
+  primaryDisabled?: boolean;
 }
 
 const Modal = ({
@@ -21,7 +22,8 @@ const Modal = ({
                  onSecondaryClick,
                  secondary = false,
                  children,
-                 centeredFooter = true
+                 centeredFooter = true,
+                 primaryDisabled
                }: ModalProps): JSX.Element => {
 
   return (
@@ -32,9 +34,9 @@ const Modal = ({
       <BootstrapModal.Body>{children}</BootstrapModal.Body>
       <BootstrapModal.Footer style={{justifyContent: centeredFooter === true ? 'center' : 'flex-end'}}>
         {secondary &&
-        <Button onClick={onSecondaryClick}>{secondaryLabel}</Button>
+          <Button onClick={onSecondaryClick}>{secondaryLabel}</Button>
         }
-        <Button onClick={onPrimaryClick}>{primaryLabel}</Button>
+        <Button onClick={onPrimaryClick} disabled={primaryDisabled}>{primaryLabel}</Button>
       </BootstrapModal.Footer>
     </BootstrapModal>
   );

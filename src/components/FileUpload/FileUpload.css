@@ -5,3 +5,16 @@
 .file-upload__remove-icon:hover {
     cursor: pointer;
 }
+
+.file-upload__upload-div {
+    padding: 20px;
+}
+
+.file-upload__label {
+    color: gray;
+    font-size: 14px;
+}
+
+.file-upload__input {
+    width: 65%;
+}
