@@ -3,23 +3,34 @@
   "moves": [
     {
       "x": 5,
-      "y": 3,
-      "player": "r"
-    },
-    {
-      "x": 5,
-      "y": 4,
-      "player": "b"
-    },
-    {
-      "x": 5,
-      "y": 2,
+      "y": 5,
       "player": "r"
     },
     {
       "x": 4,
+      "y": 5,
+      "player": "b"
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "player": "r"
+    },
+    {
+      "x": 2,
+      "y": 5,
+      "player": "b"
+    },
+    {
+      "x": 5,
       "y": 4,
+      "player": "r"
+    },
+    {
+      "x": 5,
+      "y": 1,
       "player": "b"
     }
-  ]
+  ],
+  "gameOver": false
 }

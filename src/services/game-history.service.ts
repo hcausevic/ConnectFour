@@ -91,6 +91,7 @@ class GameHistoryService {
   }
 
   public getMove(index: number): Point {
+    console.log('fffff: ', index, this._moves);
     return this._moves[index];
   }
 

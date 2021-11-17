@@ -7,15 +7,23 @@ import BoardService from '../../services/board.service';
 import Controls from '../Controls';
 import GameHistoryService from '../../services/game-history.service';
 import FileUpload from '../FileUpload';
-import {Point} from '../../interfaces/point';
-import {GameBuilder} from "../../services/game.service";
+import {useDispatch, useSelector} from "react-redux";
+import {
+  announceWinner,
+  initGame,
+  makeMove, pickGameMode, resume,
+  selectBoard,
+  selectCurrentPlayer, selectGameMode, selectWinner,
+  togglePlayer
+} from "../../reducers/gameSlice";
 
 const Board = () => {
-  const [board, setBoard] = useState(Array.from(Array(6), () => new Array(7).fill(null)));
-  const [player, setPlayer] = useState<Player>(Player.RED);
-  const [winner, setWinner] = useState<Player | null>(null);
-  const [, setCurrentMove] = useState<Point | null>(null);
-  const [gameMode, setGameMode] = useState<GameMode | null>(null);
+  const dispatch = useDispatch();
+  const board = useSelector(selectBoard);
+  const player = useSelector(selectCurrentPlayer);
+  const winner = useSelector(selectWinner);
+  const gameMode = useSelector(selectGameMode);
+
   const [showGameTypeModal, setShowGameTypeModal] = useState(true);
   const [showGameModeModal, setShowGameModeModal] = useState(false);
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
@@ -23,12 +31,26 @@ const Board = () => {
   const history = GameHistoryService.getInstance();
 
   useEffect(() => {
+    const lastMove = history.getMove(history.currentMoveIndex)
+    if (lastMove) {
+      const {x, y} = lastMove;
+      const winner = BoardService.getWinner(board, x, y);
+      if (winner) {
+        history.gameOver = true;
+        dispatch(announceWinner(player));
+      } else {
+        dispatch(togglePlayer());
+      }
+    }
+  }, [board]);
+
+  useEffect(() => {
     setTimeout(() => {
       if (player === Player.BLUE && gameMode === GameMode.PVC) {
         while (true) {
           const random = Math.floor(Math.random() * 6);
           if (BoardService.isLegalMove(board, random)) {
-            makeMove(random);
+            dispatch(makeMove(random));
             break;
           }
         }
@@ -37,48 +59,18 @@ const Board = () => {
     // eslint-disable-next-line
   }, [player])
 
-  const makeMove = (column: number): void => {
-    for (let i = board.length - 1; i >= 0; i--) {
-      if (board[i][column] === null) {
-        // set move
-        const move = {x: i, y: column, player};
-        board[i][column] = move;
-        history.lastMove = move;
-        setCurrentMove(move);
-        // check for winner
-        const winner = BoardService.getWinner(board, i, column)
-        setWinner(winner);
-        if (winner) history.gameOver = true;
-
-        // switch player if there is no winner
-        if (!winner) {
-          player === Player.RED ? setPlayer(Player.BLUE) : setPlayer(Player.RED);
-        }
-        break;
-      }
-    }
-  }
-
   const onResetGame = () => {
-    clearBoard();
-    setGameMode(null);
+    dispatch(pickGameMode(null));
     setShowGameTypeModal(true);
   }
 
-  const clearBoard = () => {
-    setBoard(Array.from(Array(6), () => new Array(7).fill(null)));
-    setPlayer(Player.RED);
-    setWinner(null);
-    setCurrentMove(null);
-  };
-
   const onVsPlayer = (): void => {
-    setGameMode(GameMode.PVP);
+    dispatch(pickGameMode(GameMode.PVP));
     history.gameMode = GameMode.PVP;
   };
 
   const onVsComputer = (): void => {
-    setGameMode(GameMode.PVC);
+    dispatch(pickGameMode(GameMode.PVC));
     history.gameMode = GameMode.PVC;
   };
 
@@ -97,6 +89,7 @@ const Board = () => {
   };
 
   const onFileChange = (e: ChangeEvent): void => {
+    console.log()
     const input = e.target as HTMLInputElement;
 
     if (input.files?.length) {
@@ -105,16 +98,7 @@ const Board = () => {
   };
 
   const onFileConfirm = async () => {
-    const game = (await new GameBuilder().addFromFile(selectedFile!)).build();
-    const newBoard = Array.from(Array(6), () => new Array(7).fill(null));
-    for (const move of game.moves) {
-      newBoard[move.x][move.y] = move;
-    }
-    setBoard(newBoard);
-    setPlayer(game.currentPlayer);
-    setGameMode(game.gameMode);
-    setCurrentMove(game.moves[game.moves.length - 1]);
-    history.createFromData(game.moves, game.gameMode!);
+    dispatch(resume(selectedFile!));
     setShowFileUploadModal(false);
   };
 
@@ -182,7 +166,7 @@ const Board = () => {
   const onUndoClick = (previousMoveIndex: number) => {
     const increment = gameMode === GameMode.PVC ? 2 : 1;
     if (previousMoveIndex === -1) {
-      clearBoard();
+      dispatch(initGame())
     } else {
       // depending on the mode, undo 1 or 2 steps
       for (let i = previousMoveIndex + increment; i > previousMoveIndex; i--) {
@@ -190,8 +174,7 @@ const Board = () => {
         board[move.x][move.y] = null;
       }
       const move = history.getMove(previousMoveIndex);
-      setCurrentMove(move);
-      setPlayer(move.player === Player.RED ? Player.BLUE : Player.RED);
+      dispatch(togglePlayer())
     }
   }
 
@@ -202,9 +185,8 @@ const Board = () => {
     for (let i = nextMoveIndex - decrement; i <= nextMoveIndex; i++) {
       const move = history.getMove(i);
       board[move.x][move.y] = move;
-      setCurrentMove(move);
     }
-    setPlayer(move.player === Player.RED ? Player.BLUE : Player.RED);
+    dispatch(togglePlayer());
   }
 
   return (
@@ -212,13 +194,13 @@ const Board = () => {
       {renderCorrectModal()}
       <Controls onUndoClick={onUndoClick} onRedoClick={onRedoClick}/>
       <div className="board">
-        {board.map((column, i: number) =>
+        {board.map((column: any, i: number) =>
           (
             <div key={i} className="board-row">
               {column.map((row: any, j: number) => (
                 <div key={i + j} className="board-cell">
                   <div className={board[i][j] !== null ? "cell-content player-" + board[i][j].player : "cell-content"}
-                       onClick={() => makeMove(j)}>
+                       onClick={() => dispatch(makeMove({column: j, player: player})) && console.log(board)}>
                     {/*({i}, {j})*/}
                   </div>
                 </div>
