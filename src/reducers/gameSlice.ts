@@ -1,4 +1,4 @@
-import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
+import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {GameBuilder} from '../services/game.service';
 import BoardService from "../services/board.service";
 import {GameMode, Player} from "../constants";
@@ -13,7 +13,7 @@ enum STATUS {
 const initBoard = () => Array.from(Array(6), () => new Array(7).fill(null));
 
 interface State {
-  board: Array<Array<Point>>;
+  board: Array<Array<Point | null>>;
   status: STATUS,
   winner: Player | null,
   currentPlayer: Player,
@@ -39,28 +39,46 @@ export const gameSlice = createSlice({
   initialState,
   reducers: {
     initGame: (state) => {
-      const game = new GameBuilder().build();
-      state = {...state, ...game, board: initBoard() };
+      state.board = initBoard();
+      state.status = STATUS.FULFILLED;
+      state.winner = null;
+      state.currentPlayer = Player.RED;
+      state.gameMode = null;
     },
     makeMove: (state, action) => {
-      const history = GameHistoryService.getInstance();
       const {board} = state;
       const {column, player} = action.payload;
-
       for (let i = board.length - 1; i >= 0; i--) {
         if (board[i][column] === null) {
+          const history = GameHistoryService.getInstance();
+          // set move
           const move = {x: i, y: column, player};
-          history.lastMove = move;
           board[i][column] = move;
+          history.lastMove = move;
+          // check for winner
+          const winner = BoardService.getWinner(state.board as any, i, column)
+          state.winner = winner;
+          if (winner) history.gameOver = true;
+
+          // switch player if there is no winner
+          if (!winner) {
+            state.currentPlayer === Player.RED ? state.currentPlayer = Player.BLUE : state.currentPlayer = Player.RED;
+          }
           break;
         }
       }
     },
-    togglePlayer: (state) => {
-      state.currentPlayer === Player.RED ? state.currentPlayer = Player.BLUE : state.currentPlayer = Player.RED;
+    undoMove: (state, action: PayloadAction<Point>) => {
+      const {x, y} = action.payload;
+      state.board[x][y] = null;
     },
-    announceWinner: (state, action) => {
-      state.winner = action.payload;
+    redoMove: (state, action: PayloadAction<Point>) => {
+      const {x, y} = action.payload;
+      state.board[x][y] = action.payload;
+    },
+    changePlayer: (state, action: PayloadAction<Player>) => {
+      state.currentPlayer = action.payload;
+      console.log('Changed to: ', state.currentPlayer)
     },
     pickGameMode: (state, action) => {
       state.gameMode = action.payload;
@@ -88,6 +106,6 @@ export const selectCurrentPlayer = (state: any) => state.game.currentPlayer;
 export const selectWinner = (state: any) => state.game.winner;
 export const selectGameMode = (state: any) => state.game.gameMode;
 
-export const {initGame, makeMove, togglePlayer, announceWinner, pickGameMode} = gameSlice.actions;
+export const {initGame, makeMove, changePlayer, redoMove, pickGameMode, undoMove} = gameSlice.actions;
 
 export default gameSlice.reducer;

@@ -9,13 +9,16 @@ import GameHistoryService from '../../services/game-history.service';
 import FileUpload from '../FileUpload';
 import {useDispatch, useSelector} from "react-redux";
 import {
-  announceWinner,
+  changePlayer,
   initGame,
-  makeMove, pickGameMode, resume,
+  makeMove, pickGameMode, redoMove,
+  resume,
   selectBoard,
-  selectCurrentPlayer, selectGameMode, selectWinner,
-  togglePlayer
-} from "../../reducers/gameSlice";
+  selectCurrentPlayer,
+  selectGameMode,
+  selectWinner,
+  undoMove
+} from '../../reducers/gameSlice';
 
 const Board = () => {
   const dispatch = useDispatch();
@@ -31,36 +34,22 @@ const Board = () => {
   const history = GameHistoryService.getInstance();
 
   useEffect(() => {
-    const lastMove = history.getMove(history.currentMoveIndex)
-    if (lastMove) {
-      const {x, y} = lastMove;
-      const winner = BoardService.getWinner(board, x, y);
-      if (winner) {
-        history.gameOver = true;
-        dispatch(announceWinner(player));
-      } else {
-        dispatch(togglePlayer());
-      }
-    }
-  }, [board]);
-
-  useEffect(() => {
     setTimeout(() => {
       if (player === Player.BLUE && gameMode === GameMode.PVC) {
         while (true) {
           const random = Math.floor(Math.random() * 6);
           if (BoardService.isLegalMove(board, random)) {
-            dispatch(makeMove(random));
+            dispatch(makeMove({column: random, player}));
             break;
           }
         }
       }
     }, 300);
-    // eslint-disable-next-line
   }, [player])
 
+
   const onResetGame = () => {
-    dispatch(pickGameMode(null));
+    dispatch(initGame());
     setShowGameTypeModal(true);
   }
 
@@ -89,7 +78,6 @@ const Board = () => {
   };
 
   const onFileChange = (e: ChangeEvent): void => {
-    console.log()
     const input = e.target as HTMLInputElement;
 
     if (input.files?.length) {
@@ -166,15 +154,15 @@ const Board = () => {
   const onUndoClick = (previousMoveIndex: number) => {
     const increment = gameMode === GameMode.PVC ? 2 : 1;
     if (previousMoveIndex === -1) {
-      dispatch(initGame())
+      dispatch(initGame());
     } else {
       // depending on the mode, undo 1 or 2 steps
       for (let i = previousMoveIndex + increment; i > previousMoveIndex; i--) {
         const move = history.getMove(i);
-        board[move.x][move.y] = null;
+        dispatch(undoMove(move));
       }
       const move = history.getMove(previousMoveIndex);
-      dispatch(togglePlayer())
+      dispatch(changePlayer(move.player === Player.RED ? Player.BLUE : Player.RED));
     }
   }
 
@@ -184,9 +172,13 @@ const Board = () => {
     // depending on the mode, redo 1 or 2 steps
     for (let i = nextMoveIndex - decrement; i <= nextMoveIndex; i++) {
       const move = history.getMove(i);
-      board[move.x][move.y] = move;
+      dispatch(redoMove(move));
     }
-    dispatch(togglePlayer());
+    dispatch(changePlayer(player));
+  }
+
+  const onMove = (column: number) => {
+    dispatch(makeMove({column, player}));
   }
 
   return (
@@ -200,8 +192,7 @@ const Board = () => {
               {column.map((row: any, j: number) => (
                 <div key={i + j} className="board-cell">
                   <div className={board[i][j] !== null ? "cell-content player-" + board[i][j].player : "cell-content"}
-                       onClick={() => dispatch(makeMove({column: j, player: player})) && console.log(board)}>
-                    {/*({i}, {j})*/}
+                       onClick={() => onMove(j)}>
                   </div>
                 </div>
               ))}
