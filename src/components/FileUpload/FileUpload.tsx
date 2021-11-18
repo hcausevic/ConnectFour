@@ -29,7 +29,8 @@ const FileUpload = ({selectedFile, onFileChange, onFileRemove}: FileUploadProps)
         </div>
       ) : (
         <div className="file-upload__upload-div div--centered">
-          <input className="file-upload__input" type="file" name="file" onChange={onFileChange} accept="application/json"/>
+          <input className="file-upload__input" type="file" name="file" onChange={onFileChange}
+                 accept="application/json"/>
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 import {Point} from '../interfaces/point';
 import {GameMode, Player} from '../constants';
-import {readFileAsync} from "../Utils/readFileAsync";
+import {readFileAsync} from "../utils/file";
 
 class Game {
   public moves: Array<Point> = [];

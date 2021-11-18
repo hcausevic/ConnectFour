@@ -1,28 +1,15 @@
 import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {GameBuilder} from '../services/game.service';
-import BoardService from "../services/board.service";
-import {GameMode, Player} from "../constants";
+import BoardService from '../services/board.service';
+import {Player, Status} from '../constants';
 import GameHistoryService from '../services/game-history.service';
-import {Point} from "../interfaces/point";
-
-enum STATUS {
-  FULFILLED,
-  PENDING
-}
+import {Point, State} from '../interfaces';
 
 const initBoard = () => Array.from(Array(6), () => new Array(7).fill(null));
 
-interface State {
-  board: Array<Array<Point | null>>;
-  status: STATUS,
-  winner: Player | null,
-  currentPlayer: Player,
-  gameMode: GameMode | null,
-}
-
 const initialState: State = {
   ...(new GameBuilder().build()),
-  status: STATUS.FULFILLED,
+  status: Status.FULFILLED,
   board: initBoard(),
   winner: null,
   currentPlayer: Player.RED,
@@ -31,9 +18,7 @@ const initialState: State = {
 
 export const resume = createAsyncThunk(
   'game/resumeGame',
-  async (file: File) => {
-    return await new GameBuilder().addFromFile(file);
-  }
+  async (file: File) => await new GameBuilder().addFromFile(file)
 );
 
 export const gameSlice = createSlice({
@@ -42,7 +27,7 @@ export const gameSlice = createSlice({
   reducers: {
     initGame: (state) => {
       state.board = initBoard();
-      state.status = STATUS.FULFILLED;
+      state.status = Status.FULFILLED;
       state.winner = null;
       state.currentPlayer = Player.RED;
       state.gameMode = null;
@@ -88,7 +73,7 @@ export const gameSlice = createSlice({
   extraReducers: builder => {
     builder
       .addCase(resume.pending, (state) => {
-        state.status = STATUS.PENDING;
+        state.status = Status.PENDING;
       })
       .addCase(resume.fulfilled, (state, action) => {
         const history = GameHistoryService.getInstance();
@@ -100,7 +85,7 @@ export const gameSlice = createSlice({
         state.board = board;
         state.gameMode = game.gameMode;
         state.currentPlayer = game.currentPlayer;
-        state.status = STATUS.FULFILLED;
+        state.status = Status.FULFILLED;
       });
   }
 });

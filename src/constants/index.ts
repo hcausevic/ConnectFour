@@ -7,3 +7,8 @@ export enum Player {
   BLUE = 'b',
   RED = 'r',
 }
+
+export enum Status {
+  FULFILLED,
+  PENDING
+}

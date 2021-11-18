@@ -1,9 +1,8 @@
-import {Point} from '../interfaces/point';
+import {Point} from '../interfaces';
 import {Player} from '../constants';
 
 class BoardService {
   public static getWinner(board: Array<Array<Point>>, row: number, column: number): Player | null {
-
     // possible directions
     const color = board[row][column].player;
     const left = column - 3 >= 0;

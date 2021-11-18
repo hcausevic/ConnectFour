@@ -4,14 +4,15 @@ import Button from 'react-bootstrap/Button';
 
 interface ModalProps {
   header?: string,
-  primaryLabel: string;
-  onPrimaryClick: MouseEventHandler<HTMLElement>;
+  primaryLabel?: string;
+  onPrimaryClick?: MouseEventHandler<HTMLElement>;
   secondaryLabel?: string;
   onSecondaryClick?: MouseEventHandler<HTMLElement>;
   secondary?: boolean;
   children?: React.ReactNode;
   centeredFooter?: boolean;
   primaryDisabled?: boolean;
+  disableFooter?: boolean;
 }
 
 const Modal = ({
@@ -23,7 +24,8 @@ const Modal = ({
                  secondary = false,
                  children,
                  centeredFooter = true,
-                 primaryDisabled
+                 primaryDisabled,
+                 disableFooter = false,
                }: ModalProps): JSX.Element => {
 
   return (
@@ -32,12 +34,15 @@ const Modal = ({
         <BootstrapModal.Header style={{justifyContent: 'center'}}>{header}</BootstrapModal.Header>
       )}
       <BootstrapModal.Body>{children}</BootstrapModal.Body>
-      <BootstrapModal.Footer style={{justifyContent: centeredFooter === true ? 'center' : 'flex-end'}}>
-        {secondary &&
-          <Button onClick={onSecondaryClick}>{secondaryLabel}</Button>
-        }
-        <Button onClick={onPrimaryClick} disabled={primaryDisabled}>{primaryLabel}</Button>
-      </BootstrapModal.Footer>
+      {!disableFooter && (
+        <BootstrapModal.Footer style={{justifyContent: centeredFooter === true ? 'center' : 'flex-end'}}>
+          {secondary &&
+          <Button variant="info" style={{color: 'white'}} onClick={onSecondaryClick}>{secondaryLabel}</Button>
+          }
+          <Button variant="info" style={{color: 'white'}} onClick={onPrimaryClick}
+                  disabled={primaryDisabled}>{primaryLabel}</Button>
+        </BootstrapModal.Footer>
+      )}
     </BootstrapModal>
   );
 }

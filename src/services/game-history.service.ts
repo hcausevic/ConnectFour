@@ -1,4 +1,4 @@
-import {Point} from '../interfaces/point';
+import {Point} from '../interfaces';
 import {GameMode} from '../constants';
 import BoardService from "./board.service";
 
