@@ -31,7 +31,9 @@ const initialState: State = {
 
 export const resume = createAsyncThunk(
   'game/resumeGame',
-  async (file: File) => await new GameBuilder().addFromFile(file)
+  async (file: File) => {
+    return await new GameBuilder().addFromFile(file);
+  }
 );
 
 export const gameSlice = createSlice({
@@ -78,7 +80,6 @@ export const gameSlice = createSlice({
     },
     changePlayer: (state, action: PayloadAction<Player>) => {
       state.currentPlayer = action.payload;
-      console.log('Changed to: ', state.currentPlayer)
     },
     pickGameMode: (state, action) => {
       state.gameMode = action.payload;
@@ -95,7 +96,11 @@ export const gameSlice = createSlice({
         history.createFromData(game.moves, game.gameMode!);
         const board = initBoard();
         for (const m of game.moves) board[m.x][m.y] = m;
-        state = {...game, status: STATUS.FULFILLED, board, winner: null};
+        state.winner = null;
+        state.board = board;
+        state.gameMode = game.gameMode;
+        state.currentPlayer = game.currentPlayer;
+        state.status = STATUS.FULFILLED;
       });
   }
 });

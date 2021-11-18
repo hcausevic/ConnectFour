@@ -167,7 +167,6 @@ const Board = () => {
   }
 
   const onRedoClick = (nextMoveIndex: number) => {
-    const move = history.getMove(nextMoveIndex);
     const decrement = gameMode === GameMode.PVC ? 1 : 0;
     // depending on the mode, redo 1 or 2 steps
     for (let i = nextMoveIndex - decrement; i <= nextMoveIndex; i++) {
